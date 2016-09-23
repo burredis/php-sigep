@@ -46,12 +46,17 @@ class RastrearObjeto
                 break;
         }
 
-        $post = array(
-            'usuario'   => $params->getAccessData()->getUsuario(),
-            'senha'     => $params->getAccessData()->getSenha(),
-            'tipo'      => $tipo,
-            'Resultado' => $tipoResultado,
-            'objetos'    => implode(
+        if (count($this->objetos) == 0) {
+            throw new RastrearObjetoException('Erro ao rastrear objetos. Nenhum objeto informado.');
+        }
+
+        $soapArgs = array(
+            'usuario' => $params->getAccessData()->getUsuario(),
+            'senha' => $params->getAccessData()->getSenha(),
+            'tipo' => $tipo,
+            'resultado' => $tipoResultado,
+            'lingua' => 101,
+            'objetos' => implode(
                 '',
                 array_map(
                     function (\PhpSigep\Model\Etiqueta $etiqueta) {
@@ -59,50 +64,31 @@ class RastrearObjeto
                     },
                     $params->getEtiquetas()
                 )
-            ),
-        );
-
-        $postContent = http_build_query($post);
-
-        $ch = curl_init();
-
-        curl_setopt_array(
-            $ch,
-            array(
-                CURLOPT_URL            => 'http://websro.correios.com.br/sro_bin/sroii_xml.eventos',
-                CURLOPT_POST           => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POSTFIELDS     => $postContent,
-                CURLOPT_SSL_VERIFYPEER => false,
             )
         );
 
-        // "usuario=ECT  &senha=SRO   &tipo=L&Resultado=T&objetos=SQ458226057BRRA132678652BRSX142052885BR"
-        // "Usuario=sigep&Senha=n5f9t8&Tipo=L&Resultado=T&Objetos=SQ458226057BR"
-        
-        $curlResult = curl_exec($ch);
-        $curlErrno  = curl_errno($ch);
-        $curlErr    = curl_error($ch);
-        curl_close($ch);
-
         $result = new Result();
-
-        if ($curlErrno) {
-            $result->setErrorMsg("Erro de comunicação com o Correios ao tentar buscar os dados de rastreamento. Detalhes: \"$curlErrno - $curlErr\".");
-            $result->setErrorCode($curlErrno);
-        } else if (!$curlResult) {
-            $result->setErrorMsg("Resposta do Correios veio vazia");
-        } else {
-            try {
-                $eventos = $this->_parseResult($curlResult);
-                $result->setResult($eventos);
-            } catch (RastrearObjetoException $e) {
-                $result->setErrorCode(0);
+        
+        try {
+            $r = SoapClientFactory::getSoapRastro()->buscaEventos($soapArgs);
+            if (!$r || !is_object($r) || !isset($r->return) || ($r instanceof \SoapFault)) {
+                if ($r instanceof \SoapFault) {
+                    throw $r;
+                }
+                throw new \Exception('Erro ao consultar os dados do cliente. Retorno: "' . $r . '"');
+            }
+            
+            $result->setResult(new RastrearObjetoResultado((array) $r->return));
+        } catch (\Exception $e) {
+            if ($e instanceof \SoapFault) {
+                $result->setIsSoapFault(true);
+                $result->setErrorCode($e->getCode());
+                $result->setErrorMsg(SoapClientFactory::convertEncoding($e->getMessage()));
+            } else {
+                $result->setErrorCode($e->getCode());
                 $result->setErrorMsg($e->getMessage());
             }
         }
-
-        return $result;
     }
 
     /**

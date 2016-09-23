@@ -25,6 +25,8 @@ class Config extends DefaultStdClass
 
     const WSDL_ATENDE_CLIENTE_DEVELOPMENT = 'https://apphom.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl';
 
+    const WSDL_RASTRO = 'https://webservice.correios.com.br/service/rastro/Rastro.wsdl';
+
     const WSDL_CAL_PRECO_PRAZO = 'http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx?WSDL';
 
     /**
@@ -33,6 +35,11 @@ class Config extends DefaultStdClass
      * @var string
      */
     protected $wsdlAtendeCliente = self::WSDL_ATENDE_CLIENTE_DEVELOPMENT;
+
+    /**
+     * @var string
+     */
+    protected $wsdlRastro = self::WSDL_RASTRO;
 
     /**
      * @var string
@@ -149,6 +156,25 @@ class Config extends DefaultStdClass
     public function setWsdlAtendeCliente($wsdlAtendeCliente)
     {
         $this->wsdlAtendeCliente = $wsdlAtendeCliente;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWsdlRastro()
+    {
+        return $this->wsdlRastro;
+    }
+
+    /**
+     * @param string $wsdlRastro
+     * @return $this
+     */
+    public function setWsdlRastro($wsdlRastro)
+    {
+        $this->wsdlRastro = $wsdlRastro;
 
         return $this;
     }

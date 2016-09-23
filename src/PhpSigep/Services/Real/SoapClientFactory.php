@@ -53,6 +53,16 @@ class SoapClientFactory
         return self::$_soapClient;
     }
 
+    public static function getSoapRastro() {
+        if (!self::$_soapRastro) {
+            $wsdl = Bootstrap::getConfig()->getWsdlRastro();
+
+            self::$_soapRastro = new \SoapClient($wsdl);
+        }
+
+        return self::$_soapRastro;
+    }
+
     public static function getSoapCalcPrecoPrazo()
     {
         if (!self::$_soapCalcPrecoPrazo) {
