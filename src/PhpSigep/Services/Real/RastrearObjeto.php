@@ -46,6 +46,10 @@ class RastrearObjeto
                 break;
         }
 
+        $this->objetos = array_map(function (\PhpSigep\Model\Etiqueta $etiqueta) {
+            return $etiqueta->getEtiquetaComDv();
+        }, $params->getEtiquetas());
+
         if (count($this->objetos) == 0) {
             throw new RastrearObjetoException('Erro ao rastrear objetos. Nenhum objeto informado.');
         }
@@ -56,15 +60,7 @@ class RastrearObjeto
             'tipo' => $tipo,
             'resultado' => $tipoResultado,
             'lingua' => 101,
-            'objetos' => implode(
-                '',
-                array_map(
-                    function (\PhpSigep\Model\Etiqueta $etiqueta) {
-                        return $etiqueta->getEtiquetaComDv();
-                    },
-                    $params->getEtiquetas()
-                )
-            )
+            'objetos' => implode('', $this->objetos)
         );
 
         $result = new Result();
